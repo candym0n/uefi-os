@@ -11,27 +11,28 @@ GPTIMG create "$IMAGE" --size "$SIZE"
 # Add partitions
 echo "Adding partitions to disk image..."
 esp_partition=$(GPTIMG add-partition "$IMAGE" --size 33M --type efi --name "EFI SYSTEM")
-data_partition=$(GPTIMG add-partition "$IMAGE" --size 1M --type basic-data --name "BASIC DATA")
+data_partition=$(GPTIMG add-partition "$IMAGE" --size 100M --type basic-data --name "BASIC DATA")
 
-# Format the ESP
-echo "Formatting partitions..."
-GPTIMG format "$IMAGE" --partition $esp_partition
-
-# Mount the ESP
-echo "Adding files to ESP (partition $esp_partition)"
+# Setup the loopback device and mount it
+echo "Setting up loopback device..."
 mount_point=$(mktemp -d)
 loop_device=$(losetup -f)
 sudo losetup "$loop_device" "$IMAGE" -P
-sudo mount "$loop_device"p1 "$mount_point"
+
+# Format the partitions
+echo "Formatting partitions..."
+sudo mkfs.fat -F 32 "$loop_device"p"$esp_partition"
+sudo mkfs.ext4 "$loop_device"p"$data_partition"
 
 # Add EFI/BOOT/BOOTX64.EFI
+sudo mount "$loop_device"p1 "$mount_point"
 echo "compiling BOOTX64.EFI"
 BOOT_FILE=boot/bin/BOOTX64.EFI
 cd boot && make -s full && cd ..
 sudo mkdir $mount_point/EFI
 sudo mkdir $mount_point/EFI/BOOT
 sudo cp $BOOT_FILE $mount_point/EFI/BOOT/BOOTX64.EFI
-
-# Unmount the loop device
 sudo umount "$mount_point"
+
+# Detatch the loop device
 sudo losetup -d "$loop_device"
