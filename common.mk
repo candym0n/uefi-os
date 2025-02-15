@@ -3,6 +3,8 @@
 
 ARCH            = $(shell uname -m | sed s,i[3456789]86,ia32,)
 
+SO_FILE         = $(BIN_DIR)/so_file.so
+
 SOURCES         = $(shell find $(SRC_DIR) -name "*.c")
 OBJECTS         = $(patsubst $(SRC_DIR)/%.c, $(BIN_DIR)/%.o, $(SOURCES))
 
@@ -46,4 +48,4 @@ $(BIN_DIR)/%.o: $(SRC_DIR)/%.c
 
 # Delete the output files
 clean:
-	rm -rf $(BIN_DIR)/*
+	rm -rf $(BIN_DIR)/* $(SO_FILE) $(TARGET)

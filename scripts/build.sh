@@ -27,10 +27,9 @@ sudo mkfs.ext4 "$loop_device"p"$data_partition"
 # Add EFI/BOOT/BOOTX64.EFI
 sudo mount "$loop_device"p1 "$mount_point"
 echo "compiling BOOTX64.EFI"
-BOOT_FILE=boot/bin/BOOTX64.EFI
-cd boot && make -s full && cd ..
-sudo mkdir $mount_point/EFI
-sudo mkdir $mount_point/EFI/BOOT
+BOOT_FILE=boot/bootloader/BOOTX64.EFI
+cd boot/bootloader && make -s full && cd ../..
+sudo mkdir -p $mount_point/EFI/BOOT
 sudo cp $BOOT_FILE $mount_point/EFI/BOOT/BOOTX64.EFI
 sudo umount "$mount_point"
 
