@@ -8,9 +8,9 @@ GPTIMG create "$IMAGE" --size "$SIZE"
 
 # Add partitions
 echo "Adding partitions to disk image..."
-esp_partition=$(GPTIMG add-partition "$IMAGE" --size 33M --type efi --name "EFI SYSTEM")
-data_partition=$(GPTIMG add-partition "$IMAGE" --size 100M --type basic-data --name "BASIC DATA")
-$(GPTIMG add-partition "$IMAGE" --size 100M --type basic-data --name "BASIC DATA")
+esp_partition=$(GPTIMG add-partition "$IMAGE" --size 64M --type efi --name "EFI System Partition")
+os_partition=$(GPTIMG add-partition "$IMAGE" --size 128M --type basic-data --name "Operating System")
+data_partition=$(GPTIMG add-partition "$IMAGE" --size 512M --type basic-data --name "Basic Data")
 
 # Setup the loopback device and mount file
 echo "Setting up loopback device..."
@@ -21,7 +21,8 @@ sudo losetup "$loop_device" "$IMAGE" -P
 # Format the partitions
 echo "Formatting partitions..."
 sudo mkfs.fat -F 32 "$loop_device"p"$esp_partition" # ESP -> FAT32
-sudo mkfs.ext4 "$loop_device"p"$data_partition"     # OS  -> EXT4
+sudo mkfs.ext4 "$loop_device"p"$os_partition"       # OS  -> EXT4
+sudo mkfs.ext4 "$loop_device"p"$data_partition"     # Data  -> EXT4
 
 # Add EFI/BOOT/BOOTX64.EFI to the ESP
 BOOT_FILE=boot/bootloader/BOOTX64.EFI
