@@ -2,11 +2,11 @@
 
 all:
 	@sh scripts/build.sh
-	echo "Run make run to test qemu"
+	@echo "Run make run to test qemu"
 
 run:
 	@sh scripts/qemu.sh
 
 clean:
-	@cd boot && make clean && cd ..
+	@cd boot/bootloader && make clean && cd ../..
 	rm -f test.img
