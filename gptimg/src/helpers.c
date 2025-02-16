@@ -108,6 +108,9 @@ uint64_t string_to_sectors(const char *size)
 
 guid_t random_guid(void)
 {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    srand(tv.tv_sec * 1000000 + tv.tv_usec);
     uint8_t rand_arr[16] = { 0 };
 
     for (uint8_t i = 0; i < sizeof rand_arr; i++)
