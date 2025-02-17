@@ -1,19 +1,81 @@
 #include "disk.h"
 
 #define GPT_HEADER_SIGNATURE 0x5452415020494645ULL // "EFI PART"
+
+// Helper function for reading in a number
+static const UINTN read_number(const CHAR16 *message, UINTN max)
+{
+    EFI_STATUS status;
+
+tryagain:
+    UINTN selected = 0;
+    Print(message);
+    while (1)
+    {
+        EFI_INPUT_KEY key;
+        status = uefi_call_wrapper(ST->ConIn->ReadKeyStroke, 2,
+                                   ST->ConIn,
+                                   &key);
+
+        if (EFI_ERROR(status))
+            continue;
+
+        if (key.UnicodeChar >= '0' && key.UnicodeChar <= '9')
+        {
+            selected = selected * 10 + (key.UnicodeChar - '0');
+            Print(L"%c", key.UnicodeChar);
+        }
+        else if (key.UnicodeChar == 'r')
+            goto tryagain;
+        else if (key.UnicodeChar == '\r')
+            break;
+    }
+
+    if (selected >= max)
+    {
+        Print(L"\nOver");
+        goto tryagain;
+    }
+
+    Print(L"\n");
+    return selected;
+}
+
 // Helper function to convert filesystem_t to a string
-static const CHAR16 *filesystem_to_string(filesystem_t type) {
-    switch (type) {
-        case FS_NONE:
-            return L"None";
-        case FS_FAT32:
-            return L"FAT32";
-        case FS_EXT4:
-            return L"EXT4";
-        default:
-            return L"Unknown";
+static const CHAR16 *filesystem_to_string(filesystem_t type)
+{
+    switch (type)
+    {
+    case FS_NONE:
+        return L"None";
+    case FS_FAT32:
+        return L"FAT32";
+    case FS_EXT4:
+        return L"EXT4";
+    default:
+        return L"Unknown";
     }
 }
+
+// Helper function to print all the partitions in a disk
+static VOID print_partitions(partition_info_t *partitions, UINTN partition_count)
+{
+    Print(L"id  | Name                    | Size (MB) | Offset    | GUID\n");
+    Print(L"------------------------------------------------------------------------------------------------\n");
+
+    // Print partition information
+    for (UINTN i = 0; i < partition_count; ++i)
+    {
+        Print(L"%3d | %-24s | %8d | %9lld | %g\n",
+              i,
+              partitions[i].name,
+              partitions[i].size / (1024 * 1024),
+              partitions[i].offset,
+              &partitions[i].unique_guid);
+        Print(L"------------------------------------------------------------------------------------------------\n");
+    }
+}
+
 // Determine which filesystem a partition is formatted to
 filesystem_t determine_format_type(partition_info_t partition, EFI_BLOCK_IO_PROTOCOL *block_io)
 {
@@ -119,16 +181,16 @@ EFI_STATUS find_partition_by_format(OUT partition_info_t *partition, filesystem_
         num_entries = gpt_header->NumberOfPartitionEntries;
 
         status = uefi_call_wrapper(BS->AllocatePool, 3,
-                          EfiLoaderData,
-                          entry_size * num_entries,
-                          (VOID **)&partition_entry);
+                                   EfiLoaderData,
+                                   entry_size * num_entries,
+                                   (VOID **)&partition_entry);
 
         status = uefi_call_wrapper(block_io->ReadBlocks, 5,
-                          block_io,
-                          block_io->Media->MediaId,
-                          gpt_header->PartitionEntryLBA,
-                          entry_size * num_entries,
-                          partition_entry);
+                                   block_io,
+                                   block_io->Media->MediaId,
+                                   gpt_header->PartitionEntryLBA,
+                                   entry_size * num_entries,
+                                   partition_entry);
 
         // Process each partition entry
         for (UINTN j = 0; j < num_entries; ++j)
@@ -159,9 +221,29 @@ EFI_STATUS find_partition_by_format(OUT partition_info_t *partition, filesystem_
             ++partition_count;
         }
 
+        // Print partition information
+        Print(L"EXT4 formatted partitions in disk %d:\n", i);
+        print_partitions(partitions, partition_count);
+
         // Free the GPT Header and entries
         uefi_call_wrapper(BS->FreePool, 1, partition_entry);
         uefi_call_wrapper(BS->FreePool, 1, gpt_header);
+
+        // Check if THIS is the disk we wnat
+        if (read_number(L"\nUse this disk? 1 for yes, 0 for no. (0):", 2) == 1)
+        {
+            uefi_call_wrapper(ST->ConOut->ClearScreen, 1, ST->ConOut);
+            break;
+        }
+        
+        uefi_call_wrapper(ST->ConOut->ClearScreen, 1, ST->ConOut);
+    }
+
+    // Check if this is the last disk
+    if (i >= handle_count)
+    {
+        Print(L"Uh oh, ran out of disks.\n");
+        return EFI_ABORTED;
     }
 
     partition_info_t selected_partition;
@@ -177,59 +259,16 @@ EFI_STATUS find_partition_by_format(OUT partition_info_t *partition, filesystem_
         goto done;
     }
 
-    // Print the table header
-    Print(L"\nMultiple %s formatted partitions were found:\n\n", filesystem_to_string(format_type));
-    Print(L"id  | Name                    | Size (MB) | Offset    | GUID\n");
-    Print(L"------------------------------------------------------------------------------------------------\n");
-
-    // Print partition information
-    for (i = 0; i < partition_count; ++i)
-    {
-        Print(L"%3d | %-24s | %8d | %9lld | %g\n",
-            i,
-            partitions[i].name,
-            partitions[i].size / (1024 * 1024),
-            partitions[i].offset,
-            &partitions[i].unique_guid
-        );
-        Print(L"------------------------------------------------------------------------------------------------\n");
-    }
+    // Print information about partitions
+    Print(L"Using disk %u\n", i);
+    Print(L"Multiple %s formatted partitions were found:\n\n", filesystem_to_string(format_type));
+    print_partitions(partitions, partition_count);
 
     // Wait for user input
-tryagain:
-    Print(L"\nPlease input the id of the one to boot from or press r to start over again (0): ");
-
-    UINTN selected = 0;
-    while (1)
-    {
-        EFI_INPUT_KEY key;
-        status = uefi_call_wrapper(ST->ConIn->ReadKeyStroke, 2,
-            ST->ConIn,
-            &key
-        );
-
-        if (EFI_ERROR(status))
-            continue;
-        
-        if (key.UnicodeChar >= '0' && key.UnicodeChar <= '9')
-        {
-            selected = selected * 10 + (key.UnicodeChar - '0');
-            Print(L"%c", key.UnicodeChar);
-        }
-        else if (key.UnicodeChar == 'r')
-            goto tryagain;
-        else if (key.UnicodeChar == '\r')
-            break;
-    }
-
-    if (selected >= partition_count)
-    {
-        Print(L"\nOver");
-        goto tryagain;
-    }
-
-    selected_partition = partitions[selected];
-    Print(L"\n");
+    selected_partition =  partitions[read_number(
+        L"\nPlease input the id of the one to boot from or press r to start over again (0): ",
+        partition_count
+    )];
 
 done:
     *partition = selected_partition;
