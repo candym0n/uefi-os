@@ -4,6 +4,7 @@
 #include <efi.h>
 #include <efilib.h>
 #include <efigpt.h>
+#include <bootio.h>
 
 #define MAX_PARTITIONS 128
 
@@ -24,7 +25,7 @@ typedef struct
     EFI_GUID unique_guid;
 } partition_info_t;
 
-// Out of all of the disks, find at least one partition of a certain format (allow user to choose if multiple)
-EFI_STATUS find_partition_by_format(OUT partition_info_t *partition, filesystem_t format_type);
+// Out of all of the devices, find the ONE device that the user chooses to boot from (this system will probably be changed in the future)
+EFI_STATUS find_boot_device(OUT EFI_BLOCK_IO_PROTOCOL *block_io);
 
 #endif
