@@ -216,5 +216,16 @@ EFI_STATUS find_boot_device(OUT EFI_BLOCK_IO_PROTOCOL *block_io)
             Print(L"Partitions:\n");
             print_partitions(partitions, partition_count);
         }
+        else
+            continue;
+        
+        // Check if the user wants to boot from here
+        if (yes_or_no(L"\nIs this the device YOU want to use: "))
+        {
+            *block_io = *devices[selected_device];
+            return EFI_SUCCESS;
+        }
+
+        Print(L"\n");
     }
 }

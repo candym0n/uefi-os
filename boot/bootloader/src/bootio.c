@@ -12,8 +12,9 @@ tryagain:
     {
         EFI_INPUT_KEY key;
         status = uefi_call_wrapper(ST->ConIn->ReadKeyStroke, 2,
-                                   ST->ConIn,
-                                   &key);
+            ST->ConIn,
+            &key
+        );
 
         if (EFI_ERROR(status))
             continue;
@@ -42,4 +43,42 @@ tryagain:
 
     Print(L"\n");
     return selected;
+}
+
+BOOLEAN yes_or_no(const CHAR16 *message)
+{
+    EFI_STATUS status;
+
+    BOOLEAN result = FALSE;
+    Print(message);
+    Print(L"N");
+    while (TRUE)
+    {
+        EFI_INPUT_KEY key;
+        status = uefi_call_wrapper(ST->ConIn->ReadKeyStroke, 2,
+            ST->ConIn,
+            &key
+        );
+        if (EFI_ERROR(status))
+            continue;
+
+        if (key.UnicodeChar == CHAR_CARRIAGE_RETURN)
+            break;
+        else if (key.UnicodeChar == 'y')
+        {
+            if (result <= 1)
+                Print(L"\b \b");
+            Print(L"Y");
+            result = 1;
+        }
+        else if (key.UnicodeChar == 'n')
+        {
+            if (result <= 1)
+                Print(L"\b \b");
+            Print(L"N");
+            result = 0;
+        }
+    }
+
+    return result;
 }

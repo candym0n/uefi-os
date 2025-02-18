@@ -18,9 +18,12 @@ efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     status = find_boot_device(&block_io);
 
     if (EFI_ERROR(status))
-        Print(L"Error finding disk: %r\n", status);
+        Print(L"Error finding device: %r\n", status);
     else
-        Print(L"Selected disk!\n");
+    {
+        uefi_call_wrapper(ST->ConOut->ClearScreen, 1, ST->ConOut);
+        Print(L"You did it, oh yeah!");
+    }
 
     while (1){}
     return status;
