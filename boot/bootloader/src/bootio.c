@@ -51,7 +51,7 @@ BOOLEAN yes_or_no(const CHAR16 *message)
 
     BOOLEAN result = FALSE;
     Print(message);
-    Print(L"N");
+    Print(L"No ");
     while (TRUE)
     {
         EFI_INPUT_KEY key;
@@ -67,15 +67,15 @@ BOOLEAN yes_or_no(const CHAR16 *message)
         else if (key.UnicodeChar == 'y')
         {
             if (result <= 1)
-                Print(L"\b \b");
-            Print(L"Y");
+                Print(L"\b \b\b \b\b \b");
+            Print(L"Yes");
             result = 1;
         }
         else if (key.UnicodeChar == 'n')
         {
             if (result <= 1)
-                Print(L"\b \b");
-            Print(L"N");
+                Print(L"\b \b\b \b\b \b");
+            Print(L"No ");
             result = 0;
         }
     }
