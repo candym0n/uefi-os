@@ -25,7 +25,7 @@ typedef struct
     EFI_GUID unique_guid;
 } partition_info_t;
 
-// Out of all of the devices, find the ONE device that the user chooses to boot from (this system will probably be changed in the future)
-EFI_STATUS find_boot_device(OUT EFI_BLOCK_IO_PROTOCOL *block_io);
+// Out of all of the partitions on all of the devices, find the ONE partition that the user chooses to boot from (this system will probably be changed in the future)
+EFI_STATUS find_boot_partition(OUT EFI_BLOCK_IO_PROTOCOL *block_io, OUT partition_info_t *partition);
 
 #endif

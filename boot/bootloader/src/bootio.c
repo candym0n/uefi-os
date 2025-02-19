@@ -1,6 +1,6 @@
 #include <bootio.h>
 
-const UINTN read_number(const CHAR16 *message, UINTN max)
+UINTN read_number(const CHAR16 *message, UINTN max)
 {
     EFI_STATUS status;
 
@@ -80,5 +80,6 @@ BOOLEAN yes_or_no(const CHAR16 *message)
         }
     }
 
+    Print(L"\n");
     return result;
 }

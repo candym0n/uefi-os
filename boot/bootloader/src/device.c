@@ -27,7 +27,7 @@ static VOID print_partitions(partition_info_t *partitions, UINTN partition_count
     for (UINTN i = 0; i < partition_count; ++i)
     {
         Print(L"%3d | %-24s | %8d | %-8s | %g\n",
-              i,
+              i + 1,
               partitions[i].name,
               partitions[i].size / (1024 * 1024),
               filesystem_to_string(partitions[i].format_type),
@@ -151,7 +151,7 @@ static BOOLEAN get_partitions(OUT partition_info_t partitions[MAX_PARTITIONS], O
     return TRUE;
 }
 
-EFI_STATUS find_boot_device(OUT EFI_BLOCK_IO_PROTOCOL *block_io)
+EFI_STATUS find_boot_partition(OUT EFI_BLOCK_IO_PROTOCOL *block_io, OUT partition_info_t *partition)
 {
     EFI_STATUS status;
     EFI_HANDLE *handle_buffer;
@@ -223,6 +223,35 @@ EFI_STATUS find_boot_device(OUT EFI_BLOCK_IO_PROTOCOL *block_io)
         if (yes_or_no(L"\nIs this the device YOU want to use: "))
         {
             *block_io = *devices[selected_device];
+        }
+        else
+            continue;
+        
+        // Determine the partition on this disk the user wants to use
+        UINTN chosen_partition;
+        uefi_call_wrapper(ST->ConOut->ClearScreen, 1, ST->ConOut);
+        while (TRUE)
+        {
+            Print(L"Partitions in device %d:\n", selected_device);
+            print_partitions(partitions, partition_count);
+            chosen_partition = read_number(L"\nWhat partition do you want to boot from? Select the partition id or 0 to clear the screen (0): ", partition_count + 1);
+            
+            // Check if we want to clear the screen
+            if (chosen_partition == 0)
+            {
+                uefi_call_wrapper(ST->ConOut->ClearScreen, 1, ST->ConOut);
+                continue;
+            }
+
+            // Check if the partition matches the requirements
+            if (partitions[chosen_partition].format_type != FS_EXT4)
+            {
+                uefi_call_wrapper(ST->ConOut->ClearScreen, 1, ST->ConOut);
+                Print(L"Partition not EXT4 formatted\n");
+                continue;
+            }
+
+            *partition = partitions[chosen_partition];
             return EFI_SUCCESS;
         }
 
