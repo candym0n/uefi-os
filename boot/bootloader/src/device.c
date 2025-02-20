@@ -40,18 +40,18 @@ static VOID print_partitions(partition_info_t *partitions, UINTN partition_count
 static filesystem_t determine_format_type(partition_info_t partition, EFI_BLOCK_IO_PROTOCOL *block_io)
 {
     UINT8 *buffer;
-    UINTN buffer_size = 4096; // read first 4KB to check format
     filesystem_t fs = FS_NONE;
 
     // Allocate buffer for reading parteition data
-    uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, buffer_size, (VOID **)&buffer);
+    uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, 4096, (VOID **)&buffer);
 
     if (EFI_ERROR(uefi_call_wrapper(block_io->ReadBlocks, 5,
-                                    block_io,
-                                    block_io->Media->MediaId,
-                                    partition.offset / block_io->Media->BlockSize,
-                                    buffer_size,
-                                    buffer)))
+            block_io,
+            block_io->Media->MediaId,
+            partition.offset / block_io->Media->BlockSize,
+            4096,
+            buffer
+    )))
         goto done;
 
     // Check for FAT32
@@ -242,6 +242,8 @@ EFI_STATUS find_boot_partition(OUT EFI_BLOCK_IO_PROTOCOL *block_io, OUT partitio
                 uefi_call_wrapper(ST->ConOut->ClearScreen, 1, ST->ConOut);
                 continue;
             }
+
+            --chosen_partition;
 
             // Check if the partition matches the requirements
             if (partitions[chosen_partition].format_type != FS_EXT4)
