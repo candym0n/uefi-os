@@ -1,12 +1,24 @@
-.PHONY: all clean run
+.PHONY: all clean run image bootloader tools
 
-all:
-	@sh scripts/build.sh
-	@echo "Run make run to test qemu"
+all: image
 
 run:
 	@sh scripts/qemu.sh
 
 clean:
-	@cd boot/bootloader && make clean && cd ../..
+	@echo "Cleaning up..."
+	@cd src/boot && make clean && cd ../..
+	@cd tools/gptimg && make clean && cd ../..
 	rm -f test.img
+
+bootloader:
+	@echo "Building bootloader..."
+	@cd src/boot && make all && cd ../..
+
+tools:
+	@echo "Building tools..."
+	@cd tools/gptimg && make all && cd ../..
+
+image: bootloader tools
+	@echo "Creating image..."
+	@sh scripts/build.sh

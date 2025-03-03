@@ -1,7 +1,7 @@
 #include <efi.h>
 #include <efilib.h>
 #include <efigpt.h>
-#include <device.h>
+#include "device.h"
 
 EFI_STATUS
 EFIAPI

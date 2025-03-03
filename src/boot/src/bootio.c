@@ -1,4 +1,4 @@
-#include <bootio.h>
+#include "bootio.h"
 
 UINTN read_number(const CHAR16 *message, UINTN max)
 {

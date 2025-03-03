@@ -4,7 +4,7 @@
 #include <efi.h>
 #include <efilib.h>
 #include <efigpt.h>
-#include <bootio.h>
+#include "bootio.h"
 
 #define MAX_PARTITIONS 128
 

@@ -1,6 +1,6 @@
 IMAGE=test.img
 SIZE=1G
-alias GPTIMG="gptimg/bin/gptimg"
+alias GPTIMG="tools/gptimg/build/gptimg"
 
 # Create the image
 echo "Creating disk image..."
@@ -9,8 +9,8 @@ GPTIMG create "$IMAGE" --size "$SIZE"
 # Add partitions
 echo "Adding partitions to disk image..."
 esp_partition=$(GPTIMG add-partition "$IMAGE" --size 64M --type efi --name "EFI System Partition")
-os_partition=$(GPTIMG add-partition "$IMAGE" --size 128M --type basic-data --name "Operating System")
-data_partition=$(GPTIMG add-partition "$IMAGE" --size 512M --type basic-data --name "Basic Data")
+os_partition=$(GPTIMG add-partition "$IMAGE" --size 512M --type basic-data --name "Operating System")
+data_partition=$(GPTIMG add-partition "$IMAGE" --size 256M --type basic-data --name "Basic Data")
 
 # Setup the loopback device and mount file
 echo "Setting up loopback device..."
@@ -21,27 +21,18 @@ sudo losetup "$loop_device" "$IMAGE" -P
 # Format the partitions
 echo "Formatting partitions..."
 sudo mkfs.fat -F 32 "$loop_device"p"$esp_partition" # ESP -> FAT32
-sudo mkfs.ext4 "$loop_device"p"$os_partition"       # OS  -> EXT4
-sudo mkfs.ext4 "$loop_device"p"$data_partition"     # Data  -> EXT4
 
-# Add EFI/BOOT/BOOTX64.EFI to the ESP
-BOOT_FILE=boot/bootloader/BOOTX64.EFI
-echo "compiling BOOTX64.EFI"
-cd boot/bootloader && make -s full && cd ../..
+# Add EFI/BOOT/BOOTX64.EFI to the ESP (using a mount sandwich)
+echo "Adding bootloader to EFI System Partition..."
+BOOT_FILE=src/boot/build/BOOTX64.EFI
+sudo mount "$loop_device"p"$esp_partition" "$mount_point"   # Top bun (mount)
+sudo mkdir -p $mount_point/EFI/BOOT                         # Meat (create dir)
+sudo cp $BOOT_FILE $mount_point/EFI/BOOT/BOOTX64.EFI        # Meat (copy file)
+sudo umount "$mount_point"                                  # Bottom bun (unmount)
 
-sudo mount "$loop_device"p"$esp_partition" "$mount_point"
-sudo mkdir -p $mount_point/EFI/BOOT
-sudo cp $BOOT_FILE $mount_point/EFI/BOOT/BOOTX64.EFI
-sudo umount "$mount_point"
-
-# Add files to the OS partition
-sudo mount "$loop_device"p"$data_partition" "$mount_point"
-sudo mkdir -p $mount_point/boot
-sudo echo "Hello world!" > $mount_point/boot/kernel.elf
-sudo umount "$mount_point"
-
-# Detatch the loop device
+# Detatch the loop device and get rid of the mount point
 sudo losetup -d "$loop_device"
+sudo rm -r "$mount_point"
 
-# Add file permissions
-chmod a+rw $IMAGE
+# Change file permissions
+sudo chmod a+rw $IMAGE

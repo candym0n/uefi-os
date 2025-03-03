@@ -1,6 +1,5 @@
 qemu-system-x86_64 \
 -drive format=raw,file=test.img,index=0 \
--drive format=raw,file=otheros.img,index=1 \
 -bios bios64.bin \
 -m 256M \
 -vga std \

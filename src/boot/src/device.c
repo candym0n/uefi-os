@@ -1,4 +1,4 @@
-#include <device.h>
+#include "device.h"
 
 #define GPT_HEADER_SIGNATURE 0x5452415020494645ULL // "EFI PART"
 
