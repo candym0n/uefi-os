@@ -228,7 +228,7 @@ bool add_gpt_partition(FILE *image, uint64_t size, guid_t guid, char16_t *name)
         return false;
     }
 
-    printf("%u", partition_count);
+    printf("%u", partition_count + 1);  // +1 since most tools start at partition 1
 
     // Cleanup
     free(partition_table);

@@ -9,9 +9,6 @@
 // Commands
 #define CMD_CREATE_IMAGE "create"         // Create a disk image
 #define CMD_ADD_PARTITION "add-partition" // Add a partition to a disk image
-#define CMD_ADD_FILE "add-file"           // Add a file to a FAT32-formatted partition
-#define CMD_ADD_DIR "add-dir"             // Add a directory to a FAT32-formatted partition
-#define CMD_FORMAT "format"               // Format a partition to FAT32
 
 // Initialize lba_size (not in config.c, believe it or not)
 uint32_t lba_size = 512;
@@ -71,8 +68,5 @@ int main(int argc, char **argv)
 
     // Check for other commands
     return strcmp(command, CMD_ADD_PARTITION) == 0 ? execute_command(add_partition(image, argc, argv), "Failed to add partition!") :
-        strcmp(command, CMD_FORMAT) == 0 ? execute_command(format_partition(image, argc, argv), "Failed to format partition!") :
-        strcmp(command, CMD_ADD_DIR) == 0 ? execute_command(add_directory(image, argc, argv), "Failed to create directory!") :
-        strcmp(command, CMD_ADD_FILE) == 0 ? execute_command(add_file(image, argc, argv), "Failed to add file!") :
         printf("Invalid command %s!\n", command) & 0 + EXIT_FAILURE;
 }

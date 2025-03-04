@@ -1,37 +1,40 @@
-IMAGE=test.img
-SIZE=1G
-alias GPTIMG="gptimg/bin/gptimg"
+#!bin/bash
 
-echo $GPTIMG
+#TARGET=build/test.img
+#SIZE=1G
+GPTIMG="$GPTIMG_DIR/build/gptimg"
 
 # Create the image
 echo "Creating disk image..."
-GPTIMG create "$IMAGE" --size "$SIZE"
+$GPTIMG create "$TARGET" --size "$SIZE"
 
 # Add partitions
 echo "Adding partitions to disk image..."
-esp_partition=$(GPTIMG add-partition "$IMAGE" --size 33M --type efi --name "EFI SYSTEM")
-data_partition=$(GPTIMG add-partition "$IMAGE" --size 1M --type basic-data --name "BASIC DATA")
+esp_partition=$($GPTIMG add-partition "$TARGET" --size 64M --type efi --name "EFI System Partition")
+os_partition=$($GPTIMG add-partition "$TARGET" --size 512M --type basic-data --name "Operating System")
+data_partition=$($GPTIMG add-partition "$TARGET" --size 256M --type basic-data --name "Basic Data")
 
-# Format the ESP
-echo "Formatting partitions..."
-GPTIMG format "$IMAGE" --partition $esp_partition
-
-# Mount the ESP
-echo "Adding files to ESP (partition $esp_partition)"
-mount_point=$(mktemp -d)
+# Setup the loopback device and mount file
+echo "Setting up loopback device..."
 loop_device=$(losetup -f)
-sudo losetup "$loop_device" "$IMAGE" -P
-sudo mount "$loop_device"p1 "$mount_point"
+mount_point=$(mktemp -d)
+sudo losetup "$loop_device" "$TARGET" -P
 
-# Add EFI/BOOT/BOOTX64.EFI
-echo "compiling BOOTX64.EFI"
-BOOT_FILE=boot/bin/BOOTX64.EFI
-cd boot && make -s full && cd ..
-sudo mkdir $mount_point/EFI
-sudo mkdir $mount_point/EFI/BOOT
-sudo cp $BOOT_FILE $mount_point/EFI/BOOT/BOOTX64.EFI
+# Format the partitions
+echo "Formatting partitions..."
+sudo mkfs.fat -F 32 "$loop_device"p"$esp_partition" # ESP -> FAT32
 
-# Unmount the loop device
-sudo umount "$mount_point"
+# Add EFI/BOOT/BOOTX64.EFI to the ESP (using a mount sandwich)
+echo "Adding bootloader to EFI System Partition..."
+BOOT_FILE=$BOOT_DIR/build/BOOTX64.EFI
+sudo mount "$loop_device"p"$esp_partition" "$mount_point"   # Top bun (mount)
+sudo mkdir -p $mount_point/EFI/BOOT                         # Meat (create dir)
+sudo cp $BOOT_FILE $mount_point/EFI/BOOT/BOOTX64.EFI        # Meat (copy file)
+sudo umount "$mount_point"                                  # Bottom bun (unmount)
+
+# Detatch the loop device and get rid of the mount point
 sudo losetup -d "$loop_device"
+sudo rm -r "$mount_point"
+
+# Change file permissions
+sudo chmod a+rw $TARGET

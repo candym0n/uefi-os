@@ -1,23 +1,31 @@
 #include <efi.h>
 #include <efilib.h>
+#include <efigpt.h>
+#include "device.h"
 
 EFI_STATUS
 EFIAPI
 efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
+    EFI_STATUS status;
+    
     InitializeLib(ImageHandle, SystemTable);
 
-	// Clear screen to yellow on green
-	uefi_call_wrapper(ST->ConOut->SetAttribute, 2, ST->ConOut, EFI_TEXT_ATTR(EFI_YELLOW, EFI_GREEN));
-	uefi_call_wrapper(ST->ConOut->ClearScreen, 1, ST->ConOut);
+    // Clear the screen
+    uefi_call_wrapper(ST->ConOut->ClearScreen, 1, ST->ConOut);
 
-	// Print text red on black
-	uefi_call_wrapper(ST->ConOut->SetAttribute, 2, ST->ConOut, EFI_TEXT_ATTR(EFI_RED,EFI_BLACK));
-	uefi_call_wrapper(ST->ConOut->OutputString, 2, ST->ConOut, L"Press any key to shutdown...");
+    // Find the partition to boot to
+    EFI_BLOCK_IO_PROTOCOL block_io;
+    partition_info_t partition;
+    status = find_boot_partition(&block_io, &partition);
 
-    // Wait until keypress, then return
-    EFI_INPUT_KEY key;
-    while (uefi_call_wrapper(ST->ConIn->ReadKeyStroke, 2, SystemTable->ConIn, &key) != EFI_SUCCESS);
-	
-    // Return success
-    return EFI_SUCCESS;
+    if (EFI_ERROR(status))
+        Print(L"Error finding partition: %r\n", status);
+    else
+    {
+        uefi_call_wrapper(ST->ConOut->ClearScreen, 1, ST->ConOut);
+        Print(L"Chose partition %s.\n", partition.name);
+    }
+
+    while (1){}
+    return status;
 }

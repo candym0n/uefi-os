@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <time.h>
+#include <sys/time.h>
 #include "config.h"
 #include "gpt.h"
 
