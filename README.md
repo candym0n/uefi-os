@@ -2,7 +2,7 @@
 This project is a simple, UEFI-based OS.
 
 ## Filesystem
-The filesystem this OS is planned to support is FAT32 and Candy FS (a custom filesystem). Candy FS is going to be sort of based off of Ext2, but with extra features like Ext4 to improve speed and efficiency.
+The filesystem this OS is planned to support is FAT32 and Candy FS (a custom filesystem). Candy FS is going to be sort of based off of Ext2, but with extra features like extents to improve speed and efficiency.
 
 ## Building
 First, you must install the neccessary things.
