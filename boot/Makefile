@@ -25,7 +25,7 @@ EFI_CRT_OBJS    = $(LIBDIR)/crt0-efi-$(ARCH).o
 EFI_LDS         = $(LIBDIR)/elf_$(ARCH)_efi.lds
 LIBS            = -lefi -lgnuefi $(shell $(CC) -print-libgcc-file-name)
 
-CFLAGS          = $(EFIINCS) -fno-stack-protector -fpic -fshort-wchar -mno-red-zone
+CFLAGS          = $(INCLUDE_DIR) $(EFIINCS) -fno-stack-protector -fpic -fshort-wchar -mno-red-zone
 ifeq ($(ARCH),x86_64)
 	CFLAGS += -DEFI_FUNCTION_WRAPPER
 endif
