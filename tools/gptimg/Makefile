@@ -25,7 +25,7 @@ all: $(TARGET)
 # Build the target executable
 $(TARGET): $(OBJECTS)
 	@echo "Linking..."
-	@mkdir -p $(BIN_DIR)			# Create BIN_DIR if it doesn't exist
+	@mkdir -p $(dir $@)
 	$(CC) $(OBJECTS) -o $(TARGET)
 
 # Compile all source files

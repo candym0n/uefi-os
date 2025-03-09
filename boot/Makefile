@@ -41,7 +41,7 @@ full:
 # Build the target executable
 $(TARGET): $(OBJECTS)
 	@echo "Linking..."
-	@mkdir -p $(BIN_DIR)
+	@mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) $(OBJECTS) -o $(SO_FILE) $(LIBS)
 	$(OBJCOPY) -j .text -j .sdata -j .data -j .dynamic -j .dynsym -j .rel \
 	           -j .rela -j .reloc --target=efi-app-$(ARCH) $(SO_FILE) $@

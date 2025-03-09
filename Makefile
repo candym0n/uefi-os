@@ -35,6 +35,7 @@ tools:
 
 image: bootloader tools
 	@echo "Creating image..."
+	@mkdir -p build
 	@bash $(BUILD_SCRIPT)
 
 run:
