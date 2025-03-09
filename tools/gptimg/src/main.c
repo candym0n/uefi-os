@@ -1,10 +1,13 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <common/string.h>
 #include "gpt.h"
 #include "helpers.h"
 #include "options.h"
 #include "config.h"
+
+// Exit codes
+#define EXIT_SUCCESS 0
+#define EXIT_FAILURE 1
 
 // Commands
 #define CMD_CREATE_IMAGE "create"         // Create a disk image

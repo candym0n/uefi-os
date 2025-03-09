@@ -2,4 +2,6 @@
 *.img
 *.EFI
 *.efi
+*.a
 .vscode
+**/build

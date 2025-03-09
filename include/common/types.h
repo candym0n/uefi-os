@@ -123,4 +123,13 @@ typedef uint64_t uintmax_t;
 #define ULLONG_MAX ((unsigned long long)(__LONG_LONG_MAX__) * 2 + 1)
 #endif
 
-#endif TYPES_H // TYPES_H
+/* Define other char types */
+typedef uint16_t char16_t;
+typedef uint32_t char32_t;
+
+/* Define booleans */
+typedef uint8_t bool;
+#define true 1
+#define false 0
+
+#endif // TYPES_H

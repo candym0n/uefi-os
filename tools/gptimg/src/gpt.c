@@ -162,7 +162,7 @@ bool add_gpt_partition(FILE *image, uint64_t size, guid_t guid, char16_t *name)
     // Verify we don't exceed the last usable LBA
     if (new_end_lba > primary_header.last_usable_lba) {
         free(partition_table);
-        printf("Out of space! %lu sectors over.\n", new_end_lba - primary_header.last_usable_lba);
+        printf("Out of space! %llu sectors over.\n", new_end_lba - primary_header.last_usable_lba);
         return false;
     }
 

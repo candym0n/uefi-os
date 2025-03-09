@@ -59,26 +59,26 @@ uint64_t string_to_sectors(const char *size)
     int i = 0;
 
     // Skip leading whitespace
-    while (isspace(size[i]))
+    while (ISSPACE(size[i]))
     {
         i++;
     }
 
     // Extract the numerical part
-    while (isdigit(size[i]))
+    while (ISDIGIT(size[i]))
     {
         num = num * 10 + (size[i] - '0');
         i++;
     }
 
     // Skip any whitespace between number and unit
-    while (isspace(size[i]))
+    while (ISSPACE(size[i]))
     {
         i++;
     }
 
     // Extract the unit (K, M, G, T, etc. - case-insensitive)
-    unit = toupper(size[i]);
+    unit = TOUPPER(size[i]);
 
     uint64_t multiplier = 1;
 

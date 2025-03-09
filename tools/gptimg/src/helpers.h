@@ -1,14 +1,13 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <ctype.h>
+#include <common/types.h>
+#include <common/string.h>
+#include <common/memory.h>
+#include <common/random.h>
 #include <time.h>
 #include <sys/time.h>
+#include <stdio.h>
 #include "config.h"
 #include "gpt.h"
 

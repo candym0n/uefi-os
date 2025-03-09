@@ -2,10 +2,8 @@
 #define CONFIG_H
 
 #include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
+#include <common/types.h>
+#include <common/string.h>
 
 // The size of the configuration part of the configuration file
 #define CONFIG_SIZE (2+8+4+1+8)

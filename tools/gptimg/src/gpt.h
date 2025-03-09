@@ -2,9 +2,8 @@
 #define GPT_H
 
 #include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <uchar.h>
+#include <stdlib.h>
+#include <common/types.h>
 #include "config.h"
 
 // --------------------------

@@ -44,7 +44,7 @@ bool create_image(char *filename, int argc, char **argv)
     // Check for valid inputs
     if (img_size <= 0)
     {
-        printf("Image size of %lu too small!\n", img_size);
+        printf("Image size of %llu too small!\n", img_size);
         return false;
     }
 

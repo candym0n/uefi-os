@@ -11,8 +11,8 @@ OBJECTS := $(SOURCES:$(SRC_DIR)/%.c=$(BIN_DIR)/%.o)		# Transform .c to .o in BIN
 TARGET = build/gptimg
 
 # The tools to use
-CC = @gcc
-CFLAGS = -std=c17 -O2
+CC = gcc
+CFLAGS = -std=c17 -O2 $(INCLUDE_DIR) $(LIBRARY)
 
 build: $(TARGET)
 
