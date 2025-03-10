@@ -1,7 +1,7 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
-#include <common/types.h>
+#include <stdint.h>
 #include <common/string.h>
 #include <common/memory.h>
 #include <common/random.h>

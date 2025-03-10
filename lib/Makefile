@@ -18,9 +18,9 @@ SRC_DIR         = src
 SOURCES         = $(shell find $(SRC_DIR) -name "*.c")
 OBJECTS         = $(patsubst $(SRC_DIR)/%.c, $(BIN_DIR)/%.o, $(SOURCES))
 
-TARGET          = build/library.a
+TARGET          = build/liblibrary.a
 
-LIBS            = -lefi -lgnuefi $(shell $(CC) -print-libgcc-file-name)
+LIBS            = -lefi -lgnuefi
 
 CFLAGS          = $(INCLUDE_DIR) -fno-stack-protector -fpic -fshort-wchar -mno-red-zone
 

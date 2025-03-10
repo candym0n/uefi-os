@@ -1,7 +1,8 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include <common/types.h>
+#include <stdint.h>
+#include <stddef.h>
 
 /**
  * @brief Copies n bytes from memory area src to memory area dest.
@@ -11,7 +12,7 @@
  * @param n The number of bytes to be copied.
  * @return A pointer to the destination memory area dest.
  */
-void *memcpy(void *dest, const void *src, size_t n);
+extern void *memcpy(void *dest, const void *src, size_t n);
 
 /**
  * @brief Compares two blocks of memory
@@ -24,6 +25,6 @@ void *memcpy(void *dest, const void *src, size_t n);
  *   - 0 if all n bytes are identical
  *   - > 0 if the first differing byte has a greater value in ptr1 than in ptr2
  */
-int memcmp(const void* ptr1, const void* ptr2, size_t n);
+extern int memcmp(const void* ptr1, const void* ptr2, size_t n);
 
 #endif // MEMORY_H

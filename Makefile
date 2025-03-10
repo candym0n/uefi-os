@@ -39,7 +39,7 @@ clean:
 	@cd $(LIB_DIR) && make clean && cd $(CURDIR)
 	rm -rf $(BUILD_DIR)
 
-bootloader:
+bootloader: lib
 	@echo "Building bootloader..."
 	@cd $(BOOT_DIR) && make all $(MAKE_FLAGS) && cd $(CURDIR)
 

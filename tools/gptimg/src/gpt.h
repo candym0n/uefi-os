@@ -3,7 +3,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <common/types.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "config.h"
 
 // --------------------------

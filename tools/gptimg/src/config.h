@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #include <stdio.h>
-#include <common/types.h>
+#include <stdint.h>
 #include <common/string.h>
 
 // The size of the configuration part of the configuration file

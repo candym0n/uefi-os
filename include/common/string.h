@@ -1,7 +1,10 @@
 #ifndef STRING_H
 #define STRING_H
 
-#include <common/types.h>
+#include <stddef.h>
+
+typedef unsigned short char16_t;
+typedef unsigned int char32_t;
 
 #define ISSPACE(c) ((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\v' || (c) == '\f' || (c) == '\r')
 #define ISDIGIT(c) ((c) >= '0' && (c) <= '9')
@@ -19,7 +22,7 @@
  * @param src A pointer to the source string to be copied.
  * @return A pointer to the destination string dest.
  */
-char *strcpy(char *dest, const char *src);
+extern char *strcpy(char *dest, const char *src);
 
 /**
  * @brief Compares two strings.
@@ -33,7 +36,7 @@ char *strcpy(char *dest, const char *src);
  *         - = 0 means str1 is equal to str2
  *         - > 0 means str1 is greater than str2
  */
-int strcmp(const char *str1, const char *str2);
+extern int strcmp(const char *str1, const char *str2);
 
 /**
  * @brief Finds the length in bytes of a string
@@ -41,6 +44,6 @@ int strcmp(const char *str1, const char *str2);
  * @param str The string whose length is to be found
  * @return The length of the string
  */
-size_t strlen(const char *str);
+extern size_t strlen(const char *str);
 
 #endif // STRING_H

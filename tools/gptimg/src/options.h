@@ -1,7 +1,7 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-#include <common/types.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include "gpt.h"
 #include "helpers.h"
