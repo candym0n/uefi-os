@@ -12,7 +12,6 @@ const guid_t ESP_GUID = {0xC12A7328, 0xF81F, 0x11D2, 0xBA, 0x4B, {0x00, 0xA0, 0x
 // (Microsoft) Basic Data GUID
 const guid_t BASIC_DATA_GUID = {0xEBD0A0A2, 0xB9E5, 0x4433, 0x87, 0xC0, {0x68, 0xB6, 0xB7, 0x26, 0x99, 0xC7}};
 
-
 bool write_mbr(FILE *image, uint64_t image_size_lbas)
 {
     // Round down the size of the image in LBAs to 0xFFFFFFFF + 1
@@ -21,9 +20,9 @@ bool write_mbr(FILE *image, uint64_t image_size_lbas)
 
     // Define the MBR to write
     mbr_t mbr = {
-        .boot_code = {0}, // Only executed by legacy BIOS systems
-        .mbr_signature = 0,   // Unused by UEFI
-        .unknown = 0,         // Unused by UEFI
+        .boot_code = {0},   // Only executed by legacy BIOS systems
+        .mbr_signature = 0, // Unused by UEFI
+        .unknown = 0,       // Unused by UEFI
         .partition[0] = {
             .boot_indicator = 0,                // Not bootable
             .starting_chs = {0x00, 0x02, 0x00}, // The start of the GPT header
@@ -69,7 +68,7 @@ bool write_gpt_headers(FILE *image, uint64_t image_size_lbas)
 
     // Fill out primary header CRC32 values
     gpt_header.partition_table_crc32 = EMPTY_TABLE_CRC32;
-    gpt_header.header_crc32 = calculate_crc32(&gpt_header, gpt_header.header_size);
+    gpt_header.header_crc32 = crc32_calculate(&gpt_header, gpt_header.header_size);
 
     // Write primary GPT Header to file
     if (fwrite(&gpt_header, sizeof gpt_header, 1, image) != 1)
@@ -86,7 +85,7 @@ bool write_gpt_headers(FILE *image, uint64_t image_size_lbas)
 
     // Fill out secondary header CRC32 values
     gpt_header.header_crc32 = 0;
-    gpt_header.header_crc32 = calculate_crc32(&gpt_header, gpt_header.header_size);
+    gpt_header.header_crc32 = crc32_calculate(&gpt_header, gpt_header.header_size);
 
     // Go to position of secondary table
     fseek(image, gpt_header.my_lba * lba_size, SEEK_SET);
@@ -111,26 +110,30 @@ bool add_gpt_partition(FILE *image, uint64_t size, guid_t guid, char16_t *name)
 
     // Read primary GPT header (LBA 1)
     fseek(image, lba_size, SEEK_SET);
-    if (fread(&primary_header, sizeof(primary_header), 1, image) != 1) {
+    if (fread(&primary_header, sizeof(primary_header), 1, image) != 1)
+    {
         printf("Failed to read GPT header!\n");
         return false;
     }
 
     // Validate GPT signature (in case this is a corrupt image)
-    if (memcmp(primary_header.signature, "EFI PART", 8) != 0) {
+    if (memcmp(primary_header.signature, "EFI PART", 8) != 0)
+    {
         printf("Invalid signature in GPT Header!\n");
         return false;
     }
-    
+
     // Read the partition table
     fseek(image, GPT_TABLE_START * lba_size, SEEK_SET);
     gpt_partition_entry_t *partition_table = malloc(GPT_TABLE_SIZE);
-    if (!partition_table) {
+    if (!partition_table)
+    {
         printf("Failed to allocate memory for partition table!\n");
         return false;
     }
 
-    if (fread(partition_table, GPT_TABLE_SIZE, 1, image) != 1) {
+    if (fread(partition_table, GPT_TABLE_SIZE, 1, image) != 1)
+    {
         printf("Failed to read the partition table!\n");
         free(partition_table);
         return false;
@@ -140,16 +143,20 @@ bool add_gpt_partition(FILE *image, uint64_t size, guid_t guid, char16_t *name)
     uint64_t last_used_lba = primary_header.first_usable_lba;
     uint32_t partition_count = 0;
 
-    for (uint32_t i = 0; i < GPT_TABLE_ENTRY_COUNT; i++) {
-        if (memcmp(&partition_table[i].partition_type_guid, &(guid_t){0}, sizeof(guid_t)) != 0) {
+    for (uint32_t i = 0; i < GPT_TABLE_ENTRY_COUNT; i++)
+    {
+        if (memcmp(&partition_table[i].partition_type_guid, &(guid_t){0}, sizeof(guid_t)) != 0)
+        {
             last_used_lba = partition_table[i].ending_lba;
             partition_count++;
         }
-        else break;
+        else
+            break;
     }
 
     // Check if we have space in the partition table
-    if (partition_count >= GPT_TABLE_ENTRY_COUNT) {
+    if (partition_count >= GPT_TABLE_ENTRY_COUNT)
+    {
         free(partition_table);
         printf("No free partition entries available!\n");
         return false;
@@ -160,7 +167,8 @@ bool add_gpt_partition(FILE *image, uint64_t size, guid_t guid, char16_t *name)
     uint64_t new_end_lba = next_aligned_lba(new_start_lba + (size));
 
     // Verify we don't exceed the last usable LBA
-    if (new_end_lba > primary_header.last_usable_lba) {
+    if (new_end_lba > primary_header.last_usable_lba)
+    {
         free(partition_table);
         printf("Out of space! %lu sectors over.\n", new_end_lba - primary_header.last_usable_lba);
         return false;
@@ -176,19 +184,20 @@ bool add_gpt_partition(FILE *image, uint64_t size, guid_t guid, char16_t *name)
 
     // Add new partition to the table in memory
     memcpy(&partition_table[partition_count], &new_partition, sizeof(gpt_partition_entry_t));
-    
+
     // Update primary GPT
     // Calculate new CRC32 for partition table
-    primary_header.partition_table_crc32 = calculate_crc32(partition_table, GPT_TABLE_SIZE);
-    
+    primary_header.partition_table_crc32 = crc32_calculate(partition_table, GPT_TABLE_SIZE);
+
     // Calculate new header CRC32
     uint32_t saved_crc32 = primary_header.header_crc32;
     primary_header.header_crc32 = 0;
-    primary_header.header_crc32 = calculate_crc32(&primary_header, primary_header.header_size);
+    primary_header.header_crc32 = crc32_calculate(&primary_header, primary_header.header_size);
 
     // Write updated partition table (primary)
     fseek(image, GPT_TABLE_START * lba_size, SEEK_SET);
-    if (fwrite(partition_table, GPT_TABLE_SIZE, 1, image) != 1) {
+    if (fwrite(partition_table, GPT_TABLE_SIZE, 1, image) != 1)
+    {
         free(partition_table);
         printf("Failed to write updated partition table!\n");
         return false;
@@ -196,7 +205,8 @@ bool add_gpt_partition(FILE *image, uint64_t size, guid_t guid, char16_t *name)
 
     // Write updated primary header
     fseek(image, lba_size, SEEK_SET);
-    if (fwrite(&primary_header, sizeof(primary_header), 1, image) != 1) {
+    if (fwrite(&primary_header, sizeof(primary_header), 1, image) != 1)
+    {
         free(partition_table);
         printf("Failed to write updated primary GPT header!\n");
         return false;
@@ -207,14 +217,15 @@ bool add_gpt_partition(FILE *image, uint64_t size, guid_t guid, char16_t *name)
     gpt_header_t secondary_header = primary_header;
     secondary_header.my_lba = primary_header.alternate_lba;
     secondary_header.alternate_lba = primary_header.my_lba;
-    secondary_header.partition_table_lba = primary_header.alternate_lba - 
-        ((GPT_TABLE_SIZE + lba_size - 1) / lba_size);
+    secondary_header.partition_table_lba = primary_header.alternate_lba -
+                                           ((GPT_TABLE_SIZE + lba_size - 1) / lba_size);
     secondary_header.header_crc32 = 0;
-    secondary_header.header_crc32 = calculate_crc32(&secondary_header, secondary_header.header_size);
+    secondary_header.header_crc32 = crc32_calculate(&secondary_header, secondary_header.header_size);
 
     // Write secondary partition table
     fseek(image, secondary_header.partition_table_lba * lba_size, SEEK_SET);
-    if (fwrite(partition_table, GPT_TABLE_SIZE, 1, image) != 1) {
+    if (fwrite(partition_table, GPT_TABLE_SIZE, 1, image) != 1)
+    {
         free(partition_table);
         printf("Failed to write secondary partition table!\n");
         return false;
@@ -222,13 +233,14 @@ bool add_gpt_partition(FILE *image, uint64_t size, guid_t guid, char16_t *name)
 
     // Write secondary header
     fseek(image, secondary_header.my_lba * lba_size, SEEK_SET);
-    if (fwrite(&secondary_header, sizeof(secondary_header), 1, image) != 1) {
+    if (fwrite(&secondary_header, sizeof(secondary_header), 1, image) != 1)
+    {
         free(partition_table);
         printf("Failed to write secondary GPT header!\n");
         return false;
     }
 
-    printf("%u", partition_count + 1);  // +1 since most tools start at partition 1
+    printf("%u", partition_count + 1); // +1 since most tools start at partition 1
 
     // Cleanup
     free(partition_table);
@@ -247,5 +259,3 @@ guid_t get_guid(char *type)
     printf("Could not find GUID for type %s.\n", type);
     return UNUSED_GUID;
 }
-
-

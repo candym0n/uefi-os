@@ -33,25 +33,28 @@ static const uint32_t crc32_table[256] = {
     0xA00AE278, 0xD70DD2EE, 0x4E048354, 0x3903B3C2, 0xA7672661, 0xD06016F7, 0x4969474D, 0x3E6E77DB,
     0xAED16A4A, 0xD9D65ADC, 0x40DF0B66, 0x37D83BF0, 0xA9BCAE53, 0xDEBB9EC5, 0x47B2CF7F, 0x30B5FFE9,
     0xBDBDF21C, 0xCABAC28A, 0x53B39330, 0x24B4A3A6, 0xBAD03605, 0xCDD70693, 0x54DE5729, 0x23D967BF,
-    0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94, 0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D
-};
+    0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94, 0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D};
 
-uint32_t crc32_update(uint32_t crc, const void *data, size_t length) {
+uint32_t crc32_update(uint32_t crc, const void *data, size_t length)
+{
     const uint8_t *p = (const uint8_t *)data;
     uint32_t result = crc ^ 0xFFFFFFFF;
-    
-    while (length--) {
+
+    while (length--)
+    {
         result = (result >> 8) ^ crc32_table[(result ^ *p++) & 0xFF];
     }
-    
+
     return result ^ 0xFFFFFFFF;
 }
 
-uint32_t crc32_calculate(const void *data, size_t length) {
+uint32_t crc32_calculate(const void *data, size_t length)
+{
     return crc32_update(0, data, length);
 }
 
-int crc32_verify(const void *data, size_t length, uint32_t expected_crc) {
+int crc32_verify(const void *data, size_t length, uint32_t expected_crc)
+{
     uint32_t calculated_crc = crc32_calculate(data, length);
     return calculated_crc == expected_crc;
 }

@@ -41,9 +41,6 @@ int main(int argc, char **argv)
     char *command = argv[1];
     char *filename = argv[2];
 
-    // Create the CRC32 table
-    create_crc32_table();
-
     // Set the LBA size
     char *lba_size_args_str = get_argument(argc, argv, "--lba-size");
     uint32_t lba_size_args;

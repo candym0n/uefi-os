@@ -26,6 +26,7 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS)
 	@echo "Linking..."
 	@mkdir -p $(BIN_DIR)			# Create BIN_DIR if it doesn't exist
+	@mkdir -p $(dir $(TARGET))
 	$(CC) $(OBJECTS) -o $(TARGET) $(LIBRARY)
 
 # Compile all source files

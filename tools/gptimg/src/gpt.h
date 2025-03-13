@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <common/crc32.h>
 #include "config.h"
 
 // --------------------------
