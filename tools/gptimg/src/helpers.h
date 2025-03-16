@@ -23,6 +23,4 @@ guid_t random_guid(void);
 // Convert a guid_t to a string of bytes
 uint8_t *guid_to_bytes(guid_t guid);
 
-char16_t *ascii_to_ucs2(const char *ascii);
-
 #endif

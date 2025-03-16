@@ -11,8 +11,8 @@ OBJECTS := $(SOURCES:$(SRC_DIR)/%.c=$(BIN_DIR)/%.o)		# Transform .c to .o in BIN
 TARGET = build/fsformat
 
 # The tools to use
-CC = @gcc
-CFLAGS = -std=c17 -O2 -I ..
+CC = gcc
+CFLAGS = -std=c17 -O2 $(INCLUDE_DIR)
 
 build: $(TARGET)
 
@@ -26,7 +26,7 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS)
 	@echo "Linking..."
 	@mkdir -p $(BIN_DIR)			# Create BIN_DIR if it doesn't exist
-	$(CC) $(OBJECTS) -o $(TARGET)
+	$(CC) $(OBJECTS) -o $(TARGET) $(LIBRARY)
 
 # Compile all source files
 $(BIN_DIR)/%.o: $(SRC_DIR)/%.c
@@ -36,4 +36,4 @@ $(BIN_DIR)/%.o: $(SRC_DIR)/%.c
 
 # Delete the output files
 clean:
-	rm -f $(BIN_DIR)/*
+	rm -f $(BIN_DIR)/* $(TARGET)

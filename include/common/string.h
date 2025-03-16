@@ -46,4 +46,14 @@ extern int strcmp(const char *str1, const char *str2);
  */
 extern size_t strlen(const char *str);
 
+/**
+ * @brief Converts an ASCII string to UTF-16
+ * 
+ * @param ascii The original ascii string to convert
+ * @param utf16 A pointer to an already allocated block of memory with a size of utf16_len * 2 bytes
+ * @param utf16_len The length of the output utf16 string in words (not dog or therefore, I mean 2 bytes)
+ * @return Nothing (void)
+ */
+extern void ascii_to_utf16(char *ascii, char16_t *utf16, size_t utf16_len);
+
 #endif // STRING_H

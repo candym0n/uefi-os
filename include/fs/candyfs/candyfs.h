@@ -4,15 +4,33 @@
 #include <stdint.h>
 
 #define BLOCK_SIZE 4096
-#define GROUP_SIZE BLOCK_SIZE * 8 // The number of blocks in a block group
+#define GROUP_SIZE (BLOCK_SIZE * 8) // The number of blocks in a block group
+
+#define INODES_PER_GROUP 8192 // 1 : 16 KiB (with 4 KiB block size and 128 MiB group size)
 
 #define SB_MAGIC 0xCAFE
-#define EXTENT_MAGIC 0xCODE
+#define EXTENT_MAGIC 0xBEEF
 
 #define CFS_TREE_ORDER 8              // The order of the B+ tree for the directory structure (hopefully an even number)
 #define CFS_TREE_NODE_SIZE BLOCK_SIZE // The size of a B+ tree node should be that of a block
 #define CFS_KEY_SIZE 256              // The size of a B+ tree key
 #define CFS_NAME_LEN 255              // The maximum length of a file name
+
+#define CFS_SB_NAME_LEN 32 // The length of the volume name (cfs_superblock_t.name)
+
+#define CFS_IT_SPAN ((sizeof(cfs_inode_t) * INODES_PER_GROUP + BLOCK_SIZE - 1) / BLOCK_SIZE) // The number of blocks that an inode table spans
+
+// NOTE: The following are all only for block groups that are not the first
+#define BLOCK_BITMAP_BLOCK(group) (group * GROUP_SIZE)
+#define INODE_BITMAP_BLOCK(group) (group * GROUP_SIZE + 1)
+#define INODE_TABLE_BLOCK(group) (group * GROUP_SIZE + 2)
+
+#define RSVD_INODES 2
+#define BAD_BLKS_INODES 1
+#define ROOT_INODE 2
+
+#define ROOT_USER_UUID 0
+#define ROOT_GROUP_UUID 0
 
 /*
  * File metadata (permissions, types, etc)
@@ -61,14 +79,15 @@ typedef struct
 // Superblock - resides in the first block of the volume (and is actually the size of the entire block)
 typedef struct
 {
-    uint8_t jump[3]; // First three bytes are left open for a jump instruction (if using MBR partitioning)
+    uint8_t open[1024]; // First 1024 bytes left open for boot sector or other stuff
 
-    char16_t name[16]; // The name of the volume
-    uint8_t uuid[16];  // Unique identifier for the volume
-    uint16_t magic;    // Magic signature (0xCAFE)
+    char16_t name[CFS_SB_NAME_LEN]; // The name of the volume
+    uint8_t uuid[16];               // Unique identifier for the volume
+    uint16_t magic;                 // Magic signature (0xCAFE)
 
     uint64_t inodes_count; // The number of inodes in the volume
     uint64_t blocks_count; // The number of blocks in the volume
+    uint32_t group_count;  // The number of block groups in the volume
 
     uint64_t free_inodes_count; // The number of free inodes in the volume
     uint64_t free_blocks_count; // The number of free blocks in the volume
@@ -76,36 +95,46 @@ typedef struct
     uint32_t block_size;       // The size of a block
     uint32_t block_group_size; // The number of blocks in a block group
 
-    uint64_t first_usable_block; // The first data block usable
-    uint64_t root_inode_index;   // The index of the root directory inode
+    uint32_t reserved_inodes;      // The number of inodes that are reserved
+    uint64_t bad_blks_inode_index; // The index of the bad blocks inode
+    uint64_t root_inode_index;     // The index of the root directory inode (2, 1 is bad blocks)
 
     uint32_t inodes_per_group; // The number of inodes in a block group
     uint32_t inode_size;       // The size of an inode in bytes
 
-    uint16_t gdt_size; // The number of blocks the GDT spans
+    uint64_t gdt_start; // The first block of the GDT
+    uint16_t gdt_span;  // The number of blocks the GDT spans
 
     uint64_t creation_time; // The time when the filesystem was created
 
     uint16_t tree_order; // The order of the B+ tree for the directory structure
 
-    /*
-     * The last 4 bytes of the superblock are a
-     * checksum for the superblock (in little endian)
-     */
+    uint8_t padding[BLOCK_SIZE - (
+        1024 +              // 1024 bytes left open
+        2 * 3 +             // uint16_t's
+        4 * 6 +             // uint32_t's
+        8 * 8 +             // uint64_t's
+        16 +                // 16 byte UUID
+        CFS_SB_NAME_LEN * 2 // Name
+        ) - 4   // 4 byte CRC32 checksum
+    ];          // Reserved for future use
+
+    uint32_t checksum; // CRC32 checksum for the superblock
+
 } __attribute__((packed)) cfs_superblock_t;
 
 // Group Descriptor - describes a block group
 typedef struct
 {
-    uint64_t block_bitmap; // The block containing the block bitmap
-    uint64_t inode_bitmap; // The block containing the inode bitmap
-    uint64_t inode_table;  // The block containing the inode table
+    uint64_t block_bitmap; // The block containing the block bitmap (0 means uninitialized)
+    uint64_t inode_bitmap; // The block containing the inode bitmap (0 means uninitialized)
+    uint64_t inode_table;  // The block containing the inode table (0 means uninitialized)
 
-    uint16_t free_inodes; // The number of free inodes in this block group
-    uint16_t free_blocks; // The number of free blocks in this block group
-    uint16_t dir_count;   // The number of directories currently in the block group
+    uint32_t free_inodes; // The number of free inodes in this block group
+    uint32_t free_blocks; // The number of free blocks in this block group
+    uint32_t dir_count;   // The number of directories currently in the block group
 
-    uint8_t reserved[30]; // Reserved for future use
+    uint8_t reserved[24]; // Reserved for future use
 
     uint32_t checksum; // Checksum for the entry
 } __attribute__((packed)) cfs_group_desc_t;
@@ -151,7 +180,7 @@ typedef struct
 
     uint64_t creation_time;     // The time the inode was created
     uint64_t modification_time; // The time the inode was last modified
-    uint64_t access_time;       // The time the inode was last accessed
+    uint64_t access_time;       // The time the inode's contents were accessed
 
     uint64_t byte_size;   // The size of the file in bytes
     uint64_t block_count; // The number of blocks the file uses
@@ -196,13 +225,5 @@ typedef struct
     } data;
     cfs_tree_key_t keys[CFS_TREE_ORDER]; // The keys of the node
 } __attribute__((packed)) cfs_tree_node_t;
-
-// Check that the size of the tree node (and friends) are correct
-static_assert(sizeof(cfs_tree_node_t) == 4 + CFS_TREE_ORDER * 8 + (CFS_TREE_ORDER * CFS_KEY_SIZE),
-              "The size of the tree node is incorrect");
-static_assert(sizeof(dir_entry_t) == CFS_TREE_ORDER * 8,
-              "The size of the directory entry is incorrect");
-static_assert(sizeof(cfs_tree_key_t) == CFS_KEY_SIZE,
-              "The size of the key is incorrect");
 
 #endif // CANDYFS_H

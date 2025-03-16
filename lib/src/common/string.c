@@ -42,3 +42,15 @@ size_t strlen(const char *str)
 
     return len;
 }
+
+void ascii_to_utf16(char *ascii, char16_t *utf16, size_t utf16_len)
+{
+    // Convert each ASCII character to UTF-16 (stopping at a terminator or max char count)
+    size_t i = 0;
+    while (ascii[i] != '\0' && i < utf16_len - 1)
+        utf16[i++] = (char16_t)ascii[i];
+
+    // Fill in the rest with 0's
+    while (++i < utf16_len)
+        utf16[i] = 0;
+}

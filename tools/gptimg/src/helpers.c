@@ -122,29 +122,3 @@ uint8_t *guid_to_bytes(guid_t guid)
 
     return result;
 }
-
-char16_t *ascii_to_ucs2(const char *ascii)
-{
-    if (!ascii)
-        return NULL;
-
-    // Get length of input string
-    size_t len = strlen(ascii);
-
-    // Allocate buffer for UCS-2 string (including null terminator)
-    char16_t *ucs2 = malloc((len + 1) * sizeof(char16_t));
-    if (!ucs2)
-        return NULL;
-
-    // Convert each ASCII character to UCS-2
-    // Since ASCII is limited to 7 bits, this is a direct mapping
-    for (size_t i = 0; i < len; i++)
-    {
-        ucs2[i] = (char16_t)(unsigned char)ascii[i];
-    }
-
-    // Null terminate the string
-    ucs2[len] = 0;
-
-    return ucs2;
-}

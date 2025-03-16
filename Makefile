@@ -13,6 +13,7 @@ TARGET := $(BUILD_DIR)/test.img
 
 # Directories of tools
 GPTIMG_DIR := $(abspath tools/gptimg)
+FSFORMAT_DIR := $(abspath tools/fsformat)
 
 # Directories of different parts of the OS
 BOOT_DIR := $(abspath boot)
@@ -36,6 +37,7 @@ clean:
 	@echo "Cleaning up..."
 	@cd $(BOOT_DIR) && make clean && cd $(CURDIR)
 	@cd $(GPTIMG_DIR) && make clean && cd $(CURDIR)
+	@cd $(FSFORMAT_DIR) && make clean && cd $(CURDIR)
 	@cd $(LIB_DIR) && make clean && cd $(CURDIR)
 	rm -rf $(BUILD_DIR)
 
@@ -46,6 +48,7 @@ bootloader: lib
 tools: lib
 	@echo "Building tools..."
 	@cd $(GPTIMG_DIR) && make all $(MAKE_FLAGS) && cd $(CURDIR)
+	@cd $(FSFORMAT_DIR) && make all $(MAKE_FLAGS) && cd $(CURDIR)
 
 image: bootloader tools
 	@mkdir -p $(BUILD_DIR)
