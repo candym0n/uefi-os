@@ -7,7 +7,7 @@ The filesystem this OS is planned to support is FAT32 and Candy FS (a custom fil
 ## Building
 First, you must install the neccessary things.
 ```
-sudo apt install gcc ld gnu-efi make qemu-system-x86_64
+sudo apt install gcc ld gnu-efi make qemu-system-x86_64 dosfstools
 ```
 Now all you have to do is run
 ```
