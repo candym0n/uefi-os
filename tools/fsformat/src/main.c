@@ -9,22 +9,18 @@
 #define COMMAND_ADD_DIR "mkdir"
 
 // Execute a function (with error handling)
-static inline int execute_command(bool result, char *message)
-{
+static inline int execute_command(bool result, char *message) {
     if (result)
         return EXIT_SUCCESS;
-    else
-    {
+    else {
         printf("ERROR: %s\n", message);
         return EXIT_FAILURE;
     }
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     // Check that we have enough arguments
-    if (argc < 2)
-    {
+    if (argc < 2) {
         printf("Usage: fsformat <command> <file> <arguments>\n");
         return EXIT_FAILURE;
     }
@@ -35,8 +31,7 @@ int main(int argc, char **argv)
 
     // Open the file
     FILE *image = fopen(filename, "rb+");
-    if (image == NULL)
-    {
+    if (image == NULL) {
         printf("Failed to open file %s!\n", filename);
         return EXIT_FAILURE;
     }

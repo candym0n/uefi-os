@@ -1,5 +1,5 @@
 # Shush Makefile
-# MAKEFLAGS += --silent
+MAKEFLAGS += --silent
 
 # Directories used for compiling
 BUILD_DIR := $(abspath build)

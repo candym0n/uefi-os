@@ -8,8 +8,7 @@
  * 4. Initialize all GDT entries
  * 5. Write default values for the root inode
  */
-bool format_image_cfs(FILE *image, uint64_t image_size, char16_t name[CFS_SB_NAME_LEN])
-{
+bool format_image_cfs(FILE *image, uint64_t image_size, char16_t name[CFS_SB_NAME_LEN]) {
     // Calculate the number of blocks the GDT spans
     uint32_t blocks = (image_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
     uint32_t block_groups = (blocks + GROUP_SIZE - 1) / (GROUP_SIZE);
@@ -18,9 +17,9 @@ bool format_image_cfs(FILE *image, uint64_t image_size, char16_t name[CFS_SB_NAM
         ((block_groups * sizeof(cfs_group_desc_t) % BLOCK_SIZE != 0) ? 1 : 0);
 
     // Calculate the location of metadata specific to the first block group
-    uint64_t block_bitmap_start = 1 + gdt_span + 1; // After superblock and GDT
-    uint64_t inode_bitmap_start = 1 + gdt_span + 2; // Right after the block bitmap
-    uint64_t inode_table_start = 1 + gdt_span + 3;  // Right after the inode bitmap
+    uint64_t block_bitmap_start = 2 + gdt_span; // After superblock and GDT
+    uint64_t inode_bitmap_start = 3 + gdt_span; // Right after the block bitmap
+    uint64_t inode_table_start = 4 + gdt_span;  // Right after the inode bitmap
 
     // Reset the file pointer to get ready for writing :)
     rewind(image);
@@ -40,10 +39,10 @@ bool format_image_cfs(FILE *image, uint64_t image_size, char16_t name[CFS_SB_NAM
     sb.group_count = block_groups;               // Again, only full groups count (right now)
 
     sb.free_inodes_count = INODES_PER_GROUP * block_groups - 1; // Minus 1 for the root inode
-    sb.free_blocks_count = blocks - block_groups * (
-        2 + // Bitmaps
-        CFS_IT_SPAN // Inode table
-    ) - 1 - gdt_span; // Superblock and GDT
+    sb.free_blocks_count = blocks - block_groups * (2 +         // Bitmaps
+                                                    CFS_IT_SPAN // Inode table
+                                                    ) -
+                           1 - gdt_span; // Superblock and GDT
 
     sb.block_size = BLOCK_SIZE;
     sb.block_group_size = GROUP_SIZE;
@@ -67,8 +66,7 @@ bool format_image_cfs(FILE *image, uint64_t image_size, char16_t name[CFS_SB_NAM
     int times = 0;
     uint32_t prev = 0;
 
-    if (fwrite(&sb, BLOCK_SIZE, 1, image) != 1)
-    {
+    if (fwrite(&sb, BLOCK_SIZE, 1, image) != 1) {
         printf("Failed to write CFS superblock!\n");
         return false;
     }
@@ -78,8 +76,7 @@ bool format_image_cfs(FILE *image, uint64_t image_size, char16_t name[CFS_SB_NAM
      */
 
     // Write entries in the GDT
-    for (uint64_t i = 0; i < block_groups; ++i)
-    {
+    for (uint64_t i = 0; i < block_groups; ++i) {
         // Fill out the block group descriptor
         cfs_group_desc_t gd = {0};
         gd.block_bitmap = i == 0 ? block_bitmap_start : BLOCK_BITMAP_BLOCK(i);
@@ -102,8 +99,7 @@ bool format_image_cfs(FILE *image, uint64_t image_size, char16_t name[CFS_SB_NAM
     }
 
     // Initialize bitmaps to 0 (except for the first block group, which will have reserved inodes)
-    for (uint64_t i = 0; i < block_groups; ++i)
-    {
+    for (uint64_t i = 0; i < block_groups; ++i) {
         // Seek to the start of the bitmaps
         fseek(image, (i == 0 ? block_bitmap_start : BLOCK_BITMAP_BLOCK(i)) * BLOCK_SIZE, SEEK_SET);
 
@@ -125,8 +121,7 @@ bool format_image_cfs(FILE *image, uint64_t image_size, char16_t name[CFS_SB_NAM
             set_bits(bitmap, 0, RSVD_INODES);
 
         // Write the inode bitmap
-        if (fwrite(bitmap, BLOCK_SIZE, 1, image) != 1)
-        {
+        if (fwrite(bitmap, BLOCK_SIZE, 1, image) != 1) {
             printf("Failed to write inode bitmap for block group #%lu!\n", i);
             return false;
         }
@@ -136,9 +131,9 @@ bool format_image_cfs(FILE *image, uint64_t image_size, char16_t name[CFS_SB_NAM
     cfs_inode_t root_inode = {0};
 
     root_inode.mode.type = DIRECTORY;
-    root_inode.mode.owner_permissions =  READ | WRITE | EXECUTE;
-    root_inode.mode.group_permissions =  READ |   0   | EXECUTE;
-    root_inode.mode.others_permissions = READ |   0   | EXECUTE;
+    root_inode.mode.owner_permissions = READ | WRITE | EXECUTE;
+    root_inode.mode.group_permissions = READ | 0 | EXECUTE;
+    root_inode.mode.others_permissions = READ | 0 | EXECUTE;
 
     root_inode.user = ROOT_USER_UUID;
     root_inode.group = ROOT_GROUP_UUID;
@@ -147,9 +142,9 @@ bool format_image_cfs(FILE *image, uint64_t image_size, char16_t name[CFS_SB_NAM
 
     root_inode.creation_time = time(NULL);
     root_inode.modification_time = time(NULL); // Technically creation = modification...
-    root_inode.access_time = time(NULL); // You have to access it to create it (?)
+    root_inode.access_time = time(NULL);       // You have to access it to create it (?)
 
-    root_inode.byte_size = 0; // Initially the root inode will be completely empty
+    root_inode.byte_size = 0;   // Initially the root inode will be completely empty
     root_inode.block_count = 0; // Again, empty
 
     root_inode.reserved = 0;
@@ -159,8 +154,7 @@ bool format_image_cfs(FILE *image, uint64_t image_size, char16_t name[CFS_SB_NAM
     // Write it!
     fseek(image, inode_table_start * BLOCK_SIZE, SEEK_SET);
 
-    if (fwrite(&root_inode, sizeof(cfs_inode_t), 1, image) != 1)
-    {
+    if (fwrite(&root_inode, sizeof(cfs_inode_t), 1, image) != 1) {
         printf("Failed to initialize the root inode!\n");
         return false;
     }

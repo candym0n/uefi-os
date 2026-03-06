@@ -2,43 +2,33 @@
 #include "options.h"
 
 // i is the index in argv of the argument name
-static char *parse_value(char **argv, int i)
-{
+static char *parse_value(char **argv, int i) {
     int j = 0;
     void *result = malloc(72);
 
-    if (argv[i][0] == '"')
-    {
-        do
-        {
+    if (argv[i][0] == '"') {
+        do {
             ((char *)result)[j++] = argv[i][j];
         } while (argv[i][j] != '"');
         
         return result;
     }
     else
-    {
         return argv[i];
-    }
 }
 
-static char *get_argument(int argc, char **argv, const char *name)
-{
+static char *get_argument(int argc, char **argv, const char *name) {
     // Search every argument to find it
-    for (int i = 1; i < argc; ++i)
-    {
+    for (int i = 1; i < argc; ++i) {
         if (strcmp(argv[i], name) == 0 && argc >= i + 1)
-        {
             return parse_value(argv, i + 1);
-        }
     }
 
     // We have not found it
     return NULL;
 }
 
-bool format_image(FILE *image, int argc, char **argv)
-{
+bool format_image(FILE *image, int argc, char **argv) {
     // Get the name of the image and convert it to UTF-16
     char *name = get_argument(argc, argv, "--name");
     char16_t better_name[CFS_SB_NAME_LEN];
