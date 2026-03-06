@@ -23,14 +23,14 @@ SO_FILE         = $(BIN_DIR)/so_file.so
 
 EFI_CRT_OBJS    = $(LIBDIR)/crt0-efi-$(ARCH).o
 EFI_LDS         = $(LIBDIR)/elf_$(ARCH)_efi.lds
-LIBS            = -lefi -lgnuefi $(shell $(CC) -print-libgcc-file-name)
+LIBS            = -lefi -lgnuefi
 
-CFLAGS          = $(EFIINCS) -fno-stack-protector -fpic -fshort-wchar -mno-red-zone
+CFLAGS          = $(INCLUDE_DIR) $(EFIINCS) -fno-stack-protector -fpic -fshort-wchar -mno-red-zone
 ifeq ($(ARCH),x86_64)
 	CFLAGS += -DEFI_FUNCTION_WRAPPER
 endif
 
-LDFLAGS         = -nostdlib -znocombreloc -T $(EFI_LDS) -shared -Bsymbolic -L$(LIBDIR) $(EFI_CRT_OBJS)
+LDFLAGS         = -znocombreloc -T $(EFI_LDS) -shared -Bsymbolic -L$(LIBDIR) $(EFI_CRT_OBJS) $(LIBRARY)
 
 all: $(TARGET)
 

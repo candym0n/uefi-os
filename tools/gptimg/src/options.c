@@ -1,3 +1,4 @@
+#include <common/string.h>
 #include "options.h"
 
 // i is the index in argv of the argument name
@@ -84,8 +85,9 @@ bool add_partition(FILE* image, int argc, char **argv)
     if (guid.clock_seq_hi_and_res == 0)
         return false;
 
-    // Get the name in UCS-12
-    char16_t *better_name = ascii_to_ucs2(name);
+    // Get the name in UTF-16
+    char16_t *better_name = malloc(GPT_PART_NAME_SIZE * 2);
+    ascii_to_utf16(name, better_name, GPT_PART_NAME_SIZE);
 
     // Add the partition
     if (!add_gpt_partition(image, size_lba, guid, better_name))

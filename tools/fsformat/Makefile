@@ -8,7 +8,7 @@ SRC_DIR = src
 # Define files
 SOURCES := $(shell find $(SRC_DIR) -name "*.c")			# All C source files under SRC_DIR
 OBJECTS := $(SOURCES:$(SRC_DIR)/%.c=$(BIN_DIR)/%.o)		# Transform .c to .o in BIN_DIR
-TARGET = build/gptimg
+TARGET = build/fsformat
 
 # The tools to use
 CC = gcc
@@ -25,14 +25,15 @@ all: $(TARGET)
 # Build the target executable
 $(TARGET): $(OBJECTS)
 	@echo "Linking..."
-	@mkdir -p $(dir $@)
-	$(CC) $(OBJECTS) -o $(TARGET)
+	@mkdir -p $(BIN_DIR)
+	@mkdir -p $(dir $(TARGET))
+	$(CC) $(OBJECTS) -o $(TARGET) $(LIBRARY)
 
 # Compile all source files
 $(BIN_DIR)/%.o: $(SRC_DIR)/%.c
 	@echo "Compiling $<..."
-	@mkdir -p $(BIN_DIR)			# Create BIN_DIR if it doesn't exist
-	$(CC) $(CFLAGS) -c $< -o $@		# Compile it to a .o object file
+	@mkdir -p $(BIN_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # Delete the output files
 clean:

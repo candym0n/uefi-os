@@ -1,10 +1,13 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <common/string.h>
 #include "gpt.h"
 #include "helpers.h"
 #include "options.h"
 #include "config.h"
+
+// Exit codes
+#define EXIT_SUCCESS 0
+#define EXIT_FAILURE 1
 
 // Commands
 #define CMD_CREATE_IMAGE "create"         // Create a disk image
@@ -37,9 +40,6 @@ int main(int argc, char **argv)
     // The first two arguments are the command and file respectively
     char *command = argv[1];
     char *filename = argv[2];
-
-    // Create the CRC32 table
-    create_crc32_table();
 
     // Set the LBA size
     char *lba_size_args_str = get_argument(argc, argv, "--lba-size");

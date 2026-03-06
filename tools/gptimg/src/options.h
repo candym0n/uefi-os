@@ -1,8 +1,8 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-#include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "gpt.h"
 #include "helpers.h"
 
