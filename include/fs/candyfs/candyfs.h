@@ -128,7 +128,7 @@ typedef struct
 {
     uint64_t block_bitmap; // The block containing the block bitmap (0 means uninitialized)
     uint64_t inode_bitmap; // The block containing the inode bitmap (0 means uninitialized)
-    uint64_t inode_table;  // The block containing the inode table (0 means uninitialized)
+    uint64_t inode_table;  // The block where the inode table starts (0 means uninitialized)
 
     uint32_t free_inodes; // The number of free inodes in this block group
     uint32_t free_blocks; // The number of free blocks in this block group
@@ -185,7 +185,7 @@ typedef struct
     uint64_t byte_size;   // The size of the file in bytes
     uint64_t block_count; // The number of blocks the file uses
 
-    uint64_t extents[1 + 2 * 4]; // The extent tree for the file (or just raw data for inline files)
+    uint64_t extents[1 + 2 * 4]; // Header + 4 ids / extents (or just raw data for inline files)
 
     uint32_t reserved; // Reserved for future use
 

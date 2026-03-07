@@ -1,10 +1,6 @@
 #include "helpers.h"
 
-void rand_uuid(uint8_t uuid[16])
-{
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    srand(tv.tv_sec * 1000000 + tv.tv_usec);
+void rand_uuid(uint8_t uuid[16]) {
     for (int i = 0; i < 16; ++i)
         uuid[i] = (uint8_t)rand();
 }

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <common/string.h>
+#include <time.h>
+#include <sys/time.h>
 #include "options.h"
 
 // Commands
@@ -24,6 +26,11 @@ int main(int argc, char **argv) {
         printf("Usage: fsformat <command> <file> <arguments>\n");
         return EXIT_FAILURE;
     }
+
+    // Get randomness ready for later
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    srand(tv.tv_sec * 1000000 + tv.tv_usec);
 
     // The first two arguments are the command and file respectively
     char *command = argv[1];
