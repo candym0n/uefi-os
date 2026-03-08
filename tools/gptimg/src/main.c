@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <common/string.h>
-#include "gpt.h"
-#include "helpers.h"
-#include "options.h"
-#include "config.h"
+#include <gpt.h>
+#include <helpers.h>
+#include <options.h>
+#include <config.h>
 
 // Exit codes
 #define EXIT_SUCCESS 0

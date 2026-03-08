@@ -1,5 +1,5 @@
 #include <common/string.h>
-#include "options.h"
+#include <options.h>
 
 // i is the index in argv of the argument name
 char *parse_value(char **argv, int i)

@@ -1,33 +1,37 @@
 # Shush Makefile
 MAKEFLAGS += --silent
 
-# Directories used for compiling
-BUILD_DIR := $(abspath build)
-INCLUDE_DIR := $(abspath include)
+# Directories used for compiling (overridable)
+BUILD_DIR ?= $(abspath build)
+INCLUDE_DIR ?= $(abspath include)
 
-# The size of the target image
-SIZE := 1G
+# Size of the target image (overridable)
+SIZE ?= 1G
 
-# The target image
-TARGET := $(BUILD_DIR)/test.img
+# Target image
+IMAGE := $(BUILD_DIR)/test.img
 
-# Directories of tools
-GPTIMG_DIR := $(abspath tools/gptimg)
+# Tool directories
+GPTIMG_DIR   := $(abspath tools/gptimg)
 FSFORMAT_DIR := $(abspath tools/fsformat)
 
-# Directories of different parts of the OS
+# OS component directories
 BOOT_DIR := $(abspath boot)
-LIB_DIR := $(abspath lib)
+LIB_DIR  := $(abspath lib)
 
 # Scripts
 BUILD_SCRIPT := scripts/build.sh
-QEMU_SCRIPT := scripts/qemu.sh
+QEMU_SCRIPT  := scripts/qemu.sh
 
-# Export all of the variables for scripts to use
-export SIZE TARGET GPTIMG_DIR BOOT_DIR
+# Export only what scripts actually need
+export SIZE IMAGE BUILD_DIR
 
-# Include default include dirs
-MAKE_FLAGS := INCLUDE_DIR=-I$(INCLUDE_DIR) LIBRARY="-L$(LIB_DIR)/build/ -llibrary"
+# Common flags passed to sub-makes
+MAKE_FLAGS := INCLUDE_DIR=-I$(INCLUDE_DIR) LIBRARY="-L$(LIB_DIR)/build/ -llibrary" BUILD_DIR=$(BUILD_DIR)
+
+# Standard variables
+RM      ?= rm -rf
+MKDIR_P ?= mkdir -p
 
 .PHONY: all clean run image bootloader tools lib
 
@@ -35,29 +39,29 @@ all: image
 
 clean:
 	@echo "Cleaning up..."
-	@cd $(BOOT_DIR) && make clean && cd $(CURDIR)
-	@cd $(GPTIMG_DIR) && make clean && cd $(CURDIR)
-	@cd $(FSFORMAT_DIR) && make clean && cd $(CURDIR)
-	@cd $(LIB_DIR) && make clean && cd $(CURDIR)
-	rm -rf $(BUILD_DIR)
+	@$(MAKE) -C "$(BOOT_DIR)" clean
+	@$(MAKE) -C "$(GPTIMG_DIR)" clean
+	@$(MAKE) -C "$(FSFORMAT_DIR)" clean
+	@$(MAKE) -C "$(LIB_DIR)"  clean
+	@$(RM) -rf "$(BUILD_DIR)"
 
 bootloader: lib
 	@echo "Building bootloader..."
-	@cd $(BOOT_DIR) && make all $(MAKE_FLAGS) && cd $(CURDIR)
+	@$(MAKE) -C "$(BOOT_DIR)" all $(MAKE_FLAGS)
 
 tools: lib
 	@echo "Building tools..."
-	@cd $(GPTIMG_DIR) && make all $(MAKE_FLAGS) && cd $(CURDIR)
-	@cd $(FSFORMAT_DIR) && make all $(MAKE_FLAGS) && cd $(CURDIR)
+	@$(MAKE) -C "$(GPTIMG_DIR)"   all $(MAKE_FLAGS)
+	@$(MAKE) -C "$(FSFORMAT_DIR)" all $(MAKE_FLAGS)
 
 image: bootloader tools
 	@echo "Creating image..."
-	@mkdir -p build
-	@bash $(BUILD_SCRIPT)
+	@$(MKDIR_P) "$(BUILD_DIR)"
+	@bash "$(BUILD_SCRIPT)"
 
 lib:
 	@echo "Building library..."
-	@cd $(LIB_DIR) && make all $(MAKE_FLAGS) && cd $(CURDIR)
+	@$(MAKE) -C "$(LIB_DIR)" all $(MAKE_FLAGS)
 
 run:
-	@bash $(QEMU_SCRIPT)
+	@bash "$(QEMU_SCRIPT)"

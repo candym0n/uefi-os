@@ -11,7 +11,7 @@
 // A number that fits into any sector / LBA block size
 #define INTERNAL_UNIT 512
 
-// The alignment value (starts and ends of partitionsmust be a multiple of this value)
+// The alignment value (starts and ends of partitions must be a multiple of this value)
 #define ALIGNMENT 1024 * 1024 // Megabyte
 
 // The alignment value in LBA blocks

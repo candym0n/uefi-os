@@ -1,5 +1,6 @@
 #include <common/string.h>
-#include "options.h"
+#include <fs/candyfs/candyfs.h>
+#include <options.h>
 
 // i is the index in argv of the argument name
 static char *parse_value(char **argv, int i) {

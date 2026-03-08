@@ -1,5 +1,5 @@
-#include "gpt.h"
-#include "helpers.h"
+#include <gpt.h>
+#include <helpers.h>
 
 #define EMPTY_TABLE_CRC32 0xAB54D286 // The CRC32 checksum of 128 * 128 0's
 

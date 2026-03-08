@@ -1,5 +1,6 @@
 #include <common/string.h>
-#include "format.h"
+#include <common/memory.h>
+#include <format.h>
 
 /**
  * Format a new CFS filesystem image.

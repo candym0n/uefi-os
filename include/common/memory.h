@@ -27,4 +27,14 @@ extern void *memcpy(void *dest, const void *src, size_t n);
  */
 extern int memcmp(const void* ptr1, const void* ptr2, size_t n);
 
+/**
+ * @brief Fills the first n bytes of the memory area pointed to by ptr with the constant byte value.
+ * 
+ * @param ptr A pointer to the block of memory to fill.
+ * @param value The byte value to fill the memory with (only the least significant byte is used).
+ * @param n The number of bytes to be set to the value.
+ * @return A pointer to the memory area ptr.
+ */
+extern void *memset(void *ptr, int value, size_t n);
+
 #endif // MEMORY_H

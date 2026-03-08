@@ -2,6 +2,7 @@
 #define CANDYFS_H
 
 #include <stdint.h>
+#include <common/string.h>
 
 #define BLOCK_SIZE 4096
 #define GROUP_SIZE (BLOCK_SIZE * 8) // The number of blocks in a block group

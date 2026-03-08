@@ -1,4 +1,5 @@
 #include <common/memory.h>
+#include "memory.h"
 
 void *memcpy(void *dest, const void *src, size_t n)
 {
@@ -36,4 +37,14 @@ int memcmp(const void *ptr1, const void *ptr2, size_t n)
 
     // All bytes are equal
     return 0;
+}
+
+void *memset(void *ptr, int value, size_t n)
+{
+    unsigned char *p = (unsigned char *)ptr;
+    while (n--)
+    {
+        *p++ = (unsigned char)value;
+    }
+    return ptr;
 }

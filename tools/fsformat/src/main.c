@@ -3,7 +3,7 @@
 #include <common/string.h>
 #include <time.h>
 #include <sys/time.h>
-#include "options.h"
+#include <options.h>
 
 // Commands
 #define COMMAND_FORMAT "format"
