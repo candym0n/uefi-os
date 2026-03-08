@@ -12,6 +12,8 @@ This document describes the exact on-disk structures used by CandyFS
 |---------|------------|----------|-------------------------|
 | 0       | Superblock | 1 block  | Global metadata + MBR   |
 | 0       | GDT        |`gdt_span`| Group descriptors       |
+| 0       |Block Bitmap| 1 block  | Marks usage of blocks   |
+| 0       |Inode Bitmap| 1 block  | Marks usage of inodes   |
 | 0       |Data blocks | Leftover |Can be used to store data|
 | 1       |Block Bitmap| 1 block  | Marks usage of blocks   |
 | 1       |Inode Bitmap| 1 block  | Marks usage of inodes   |
