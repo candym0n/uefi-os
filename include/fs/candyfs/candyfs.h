@@ -12,10 +12,7 @@
 #define SB_MAGIC 0xCAFE
 #define EXTENT_MAGIC 0xBEEF
 
-#define CFS_TREE_ORDER 8              // The order of the B+ tree for the directory structure (hopefully an even number)
-#define CFS_TREE_NODE_SIZE BLOCK_SIZE // The size of a B+ tree node should be that of a block
-#define CFS_KEY_SIZE 256              // The size of a B+ tree key
-#define CFS_NAME_LEN 255              // The maximum length of a file name
+#define CFS_NAME_LEN 248 // The maximum length of a file name
 
 #define CFS_SB_NAME_LEN 32 // The length of the volume name (cfs_superblock_t.name)
 
@@ -44,12 +41,6 @@ typedef enum
     WRITE = 0b010,
     EXECUTE = 0b100
 } cfs_permissions_t;
-
-// Flags for the inodes
-typedef enum
-{
-    INODE_INLINE = 0b0001, // The data is stored inline (instead of extents)
-} cfs_inode_flags_t;
 
 // Different types of files
 typedef enum __attribute__((packed))
@@ -108,17 +99,15 @@ typedef struct
 
     uint64_t creation_time; // The time when the filesystem was created
 
-    uint16_t tree_order; // The order of the B+ tree for the directory structure
-
-    uint8_t padding[BLOCK_SIZE - (
-        1024 +              // 1024 bytes left open
-        2 * 3 +             // uint16_t's
-        4 * 6 +             // uint32_t's
-        8 * 8 +             // uint64_t's
-        16 +                // 16 byte UUID
-        CFS_SB_NAME_LEN * 2 // Name
-        ) - 4   // 4 byte CRC32 checksum
-    ];          // Reserved for future use
+    uint8_t padding[BLOCK_SIZE - (1024 +              // 1024 bytes left open
+                                  2 * 2 +             // uint16_t's
+                                  4 * 6 +             // uint32_t's
+                                  8 * 8 +             // uint64_t's
+                                  16 +                // 16 byte UUID
+                                  CFS_SB_NAME_LEN * 2 // Name
+                                  ) -
+                    4 // 4 byte CRC32 checksum
+    ];                // Reserved for future use
 
     uint32_t checksum; // CRC32 checksum for the superblock
 
@@ -147,7 +136,7 @@ typedef struct
 // Extent Header - describes the extent tree
 typedef struct
 {
-    uint16_t magic;    // Magic signature (0xCODE)
+    uint16_t magic;    // Magic signature (0xBEEF)
     uint16_t entries;  // The number of entries in the extent
     uint16_t depth;    // The depth of the extent tree (how many indirections)
     uint16_t reserved; // Reserved for future use
@@ -170,7 +159,7 @@ typedef struct
     uint16_t reserved;       // Reserved for future use
 } __attribute__((packed)) cfs_extent_t;
 
-// Inode - describes a file or directory or something else (?)
+// Inode - describes a file or directory or something else
 typedef struct
 {
     cfs_file_mode_t mode; // Types and permissions of the inode
@@ -186,45 +175,31 @@ typedef struct
     uint64_t byte_size;   // The size of the file in bytes
     uint64_t block_count; // The number of blocks the file uses
 
-    uint64_t extents[1 + 2 * 4]; // Header + 4 ids / extents (or just raw data for inline files)
+    union {
+        uint64_t raw[1 + 2 * 4]; // For inline data (files smaller than 4096 bytes)
+        struct {
+            cfs_extent_header_t header; // The header of the extent tree (if the file is larger than 4096 bytes)
+            union {
+                cfs_extent_id_t ids[4]; // The extent tree identifiers (if the file is larger than 4096 bytes but smaller than 16 MiB)
+                cfs_extent_t extents[4]; // The extents themselves (if the file is larger than 16 MiB)
+            } tree;
+        } extents;
+    } extents; // Header + 4 ids / extents (or just raw data for inline files)
 
     uint32_t reserved; // Reserved for future use
 
     uint32_t checksum; // Checksum for the inode
 } __attribute__((packed)) cfs_inode_t;
 
-/*
- * Directory structures (entries, B+ trees...)
- * (Note: All 'block addresses' are logical block numbers of the directory file)
+/**
+ * File-object structures
  */
-
-// B+ Tree key data structure
-typedef struct
-{
-    char name[CFS_NAME_LEN];                   // The name of the file or directory
-    uint8_t zero[CFS_KEY_SIZE - CFS_NAME_LEN]; // Zero padding to make the key size constant
-} __attribute__((packed)) cfs_tree_key_t;
 
 // A directory entry
 typedef struct
 {
-    uint64_t next;                             // The next node in the linked list
-    uint64_t inode;                            // The inode of the file
-    uint8_t reserved[CFS_TREE_ORDER * 8 - 16]; // Reserved for future use
-} __attribute__((packed)) dir_entry_t;
-
-// B+ Tree Node - describes a node in the B+ tree
-typedef struct
-{
-    uint16_t n;      // The current number of keys in the node
-    uint8_t leaf;    // Whether the node is a leaf
-    uint8_t padding; // Padding for alignment
-    union
-    {
-        dir_entry_t entry;                 // The directory entry (if leaf)
-        uint64_t children[CFS_TREE_ORDER]; // The blocks of the children of the node (if internal)
-    } data;
-    cfs_tree_key_t keys[CFS_TREE_ORDER]; // The keys of the node
-} __attribute__((packed)) cfs_tree_node_t;
+    char name[CFS_NAME_LEN]; // The name of the file or directory (null terminated, UTF-8)
+    uint64_t inode;          // The inode of the file (0 means this entry is not used)
+} __attribute__((packed)) cfs_dir_entry_t;
 
 #endif // CANDYFS_H

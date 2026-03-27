@@ -6,7 +6,6 @@ CandyFS is the primary filesystem of this OS, designed for simplicity, robustnes
 
 - Simple on-disk format based on Ext2
 - Extent-based allocation for fewer seeks
-- B+ tree directories for scalable lookups
 - Clear seperation between VFS and CandyFS implementation
 
 ## Integration with the OS

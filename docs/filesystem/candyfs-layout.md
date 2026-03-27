@@ -4,9 +4,10 @@ This document describes the exact on-disk structures used by CandyFS
 
 ## Global layout
 
-- The disk is divided into fixed-size blocks (e.g. 4 KiB)
-- Blocks are grouped into block groups, each managing its own bitmaps and inode table
+- The disk is divided into fixed-size contiguous blocks (4 KiB)
+- Blocks are grouped into contiguous block groups, each managing its own bitmaps and inode table
 - The first block of the volume contains the superblock
+- IMPORTANT: Everything in Candy FS is little endian, unless specified otherwise
 
 | Group # | Type       | Span     | Contains                |
 |---------|------------|----------|-------------------------|
@@ -14,6 +15,7 @@ This document describes the exact on-disk structures used by CandyFS
 | 0       | GDT        |`gdt_span`| Group descriptors       |
 | 0       |Block Bitmap| 1 block  | Marks usage of blocks   |
 | 0       |Inode Bitmap| 1 block  | Marks usage of inodes   |
+| 0       |Inode Table | See NOTE | Describes group's inodes|
 | 0       |Data blocks | Leftover |Can be used to store data|
 | 1       |Block Bitmap| 1 block  | Marks usage of blocks   |
 | 1       |Inode Bitmap| 1 block  | Marks usage of inodes   |
@@ -80,6 +82,7 @@ Each inode stores information about a file-system object such as a file or direc
 - `extents`: Extent tree for the file (or raw data for inline files)
 - `checksum`: Checksum for the inode
 - `creation_time`, `modification_time`, `access_time`
+To determine whether or not a file is inline simply check that its first 4 bytes are not `0xCODE` (the extent header magic number)
 
 ### Extents
 Extents are used to store data in contiguous blocks. For example, instead of saying "This file has data from blocks 1, 2, 3, 4, 10, 11, 12" you can just say "This file has data in the range [1, 4] U [10, 12]". 
